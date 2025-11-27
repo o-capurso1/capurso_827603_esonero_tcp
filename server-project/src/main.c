@@ -20,6 +20,10 @@
 #define closesocket close
 #endif
 
+#ifndef WIN32
+typedef int SOCKET;
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
