@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "protocol.h"
 
 #define NO_ERROR 0
@@ -32,41 +33,91 @@ void clearwinsock() {
 #endif
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
+    int ris = 0; // NO_ERROR
 
-	// TODO: Implement client logic
+    // 1. Parsing command line
+    char server_ip[32] = "127.0.0.1";
+    int port = SERVER_PORT;
+    char request[BUFFER_SIZE] = "";
+    for (int i = 1; i < argc-1; i++) {
+        if (strcmp(argv[i], "-s") == 0)
+            strcpy(server_ip, argv[i+1]);
+        else if (strcmp(argv[i], "-p") == 0)
+            port = atoi(argv[i+1]);
+        else if (strcmp(argv[i], "-r") == 0)
+            strcpy(request, argv[i+1]);
+    }
 
-#if defined WIN32
-	// Initialize Winsock
-	WSADATA wsa_data;
-	int result = WSAStartup(MAKEWORD(2,2), &wsa_data);
-	if (result != NO_ERROR) {
-		printf("Error at WSAStartup()\n");
-		return 0;
-	}
-#endif
+	#if defined WIN32
+		WSADATA wsaData;
+		ris = WSAStartup(MAKEWORD(2, 2), &wsaData);
+		if (ris != 0) {
+			printf("WSAStartup failed: %d\n", ris);
+			return 1;
+		}
+	#endif
 
-	int my_socket;
+    // Parsing request
+    weather_request_t req;
+    memset(&req, 0, sizeof(req));
+    sscanf(request, "%c %[^\n]", &req.type, req.city);
 
-	// TODO: Create socket
-	// my_socket = socket(...);
+    // 2. Socket
+    SOCKET my_socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (my_socket < 0) {
+        perror("Socket creation failed");
+        clearwinsock();
+        return 1;
+    }
 
-	// TODO: Configure server address
-	// struct sockaddr_in server_addr;
-	// ...
+    struct sockaddr_in sad;
+    sad.sin_family = AF_INET;
+    sad.sin_addr.s_addr = inet_addr(server_ip);
+    sad.sin_port = htons(port);
 
-	// TODO: Connect to server
-	// connect(...);
+    // 3. Connect
+    if (connect(my_socket, (struct sockaddr*)&sad, sizeof(sad)) < 0) {
+        perror("Connect failed");
+        clearwinsock();
+        return 1;
+    }
 
-	// TODO: Implement communication logic
-	// send(...);
-	// recv(...);
+    // 4. Sending request
+    send(my_socket, (char*)&req, sizeof(req), 0);
 
-	// TODO: Close socket
-	// closesocket(my_socket);
+    // 5. Get answer
+    weather_response_t res;
+    int n = recv(my_socket, (char*)&res, sizeof(res), 0);
 
-	printf("Client terminated.\n");
+    printf("Ricevuto risultato dal server ip %s. ", server_ip);
+    if (n <= 0) {
+        perror("Error receiving response");
+    }
+    else if (res.status == STATUS_OK) {
+        switch (res.type) {
+            case 't':
+            	printf("%s: Temperatura = %.1f°C\n", req.city, res.value);
+            	break;
+            case 'h':
+            	printf("%s: Umidità = %.1f%%\n", req.city, res.value);
+            	break;
+            case 'w':
+            	printf("%s: Vento = %.1f km/h\n", req.city, res.value);
+            	break;
+            case 'p':
+            	printf("%s: Pressione = %.1f hPa\n", req.city, res.value);
+            	break;
+        }
+    }
+    else if (res.status == STATUS_CITY_ERR) {
+        printf("Citta' non disponibile\n");
+    }
+    else if (res.status == STATUS_INVALID_REQ) {
+        printf("Richiesta non valida\n");
+    }
 
-	clearwinsock();
-	return 0;
-} // main end
+	closesocket(my_socket);
+    clearwinsock();
+    return NO_ERROR;
+}

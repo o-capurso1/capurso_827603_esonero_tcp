@@ -1,23 +1,31 @@
-/*
- * protocol.h
- *
- * Client header file
- * Definitions, constants and function prototypes for the client
- */
-
 #ifndef PROTOCOL_H_
 #define PROTOCOL_H_
 
-// Shared application parameters
-#define SERVER_PORT 27015  // Server port (change if needed)
-#define BUFFER_SIZE 512    // Buffer size for messages
+#define SERVER_PORT 56700
+#define BUFFER_SIZE 512
 
-// Function prototypes
-// Add here the signatures of the functions implemented by students
+// Status codes
+#define STATUS_OK          0
+#define STATUS_CITY_ERR    1
+#define STATUS_INVALID_REQ 2
 
-/*
- * Example function to implement:
- * int connect_to_server(const char* server_address);
- */
+// Supported types
+#define TYPE_TEMP 't'
+#define TYPE_HUM 'h'
+#define TYPE_WIND 'w'
+#define TYPE_PRESS 'p'
+
+// Request structure
+typedef struct {
+    char type; // Weather data type: 't', 'h', 'w', 'p'
+    char city[64]; // City name (null-terminated string)
+} weather_request_t;
+
+// Response structure
+typedef struct {
+    unsigned int status; // Response status code
+    char type; // Echo of request type
+    float value; // Weather data value
+} weather_response_t;
 
 #endif /* PROTOCOL_H_ */
