@@ -90,7 +90,7 @@ int main(int argc, char* argv[]) {
 		#if defined WIN32
 				int client_len = sizeof(cad);
 		#else
-				socklen_t len = sizeof(cad);
+				socklen_t client_len = sizeof(cad);
 		#endif
 
         SOCKET client_socket = accept(my_socket, (struct sockaddr*)&cad, &client_len);
