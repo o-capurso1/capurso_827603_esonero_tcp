@@ -55,9 +55,8 @@ int main(int argc, char* argv[]) {
 
 	#if defined WIN32
 		WSADATA wsaData;
-		ris = WSAStartup(MAKEWORD(2, 2), &wsaData);
-		if (ris != 0) {
-			printf("WSAStartup failed: %d\n", ris);
+		if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+			printf("WSAStartup failed: %d\n");
 			return 1;
 		}
 	#endif

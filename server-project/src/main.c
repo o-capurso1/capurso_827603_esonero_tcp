@@ -38,8 +38,6 @@ void clearwinsock() {
 }
 
 int main(int argc, char* argv[]) {
-    int ris = 0; // NO_ERROR
-
     // 1. Parsing command line
     int port = SERVER_PORT;
     for (int i = 1; i < argc - 1; i++)
@@ -48,9 +46,8 @@ int main(int argc, char* argv[]) {
 
 	#if defined WIN32
 		WSADATA wsaData;
-		ris = WSAStartup(MAKEWORD(2, 2), &wsaData);
-		if (ris != 0) {
-			printf("WSAStartup failed: %d\n", ris);
+		if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+			printf("WSAStartup failed: %d\n");
 			return 1;
 		}
 	#endif
@@ -103,6 +100,12 @@ int main(int argc, char* argv[]) {
         // 6. Reception request
         weather_request_t req;
         int n = recv(client_socket, (char*)&req, sizeof(req), 0);
+        if (n <= 0) {
+            perror("Receiving request failed");
+            closesocket(client_socket);
+            clearwinsock();
+            return 1;
+        }
 
         printf("Richiesta '%c %s' dal client ip %s\n", req.type, req.city, inet_ntoa(cad.sin_addr));
 
