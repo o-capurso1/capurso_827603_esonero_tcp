@@ -38,8 +38,6 @@ void clearwinsock() {
 }
 
 int main(int argc, char* argv[]) {
-    int ris = 0; // NO_ERROR
-
     // 1. Parsing command line
     char server_ip[32] = "127.0.0.1";
     int port = SERVER_PORT;
